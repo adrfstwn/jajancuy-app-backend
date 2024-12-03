@@ -1,1 +1,4 @@
 .venv
+backend/django_backend/user_services/user_services/.env
+backend/django_backend/transaction_services/transaction_services/.env
+backend/django_backend/content_services/content_services/.env

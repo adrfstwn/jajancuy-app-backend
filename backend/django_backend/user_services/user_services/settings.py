@@ -11,6 +11,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -62,8 +66,8 @@ ACCOUNT_EMAIL_REQUIRED = True
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'APP': {
-            'client_id': '1083955547776-k0j313bu0i2ql2bj3eq783luqln141nr.apps.googleusercontent.com',
-            'secret': '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',
+            'client_id': os.getenv('CLIENT_GOOGLE_ID'),
+            'secret': os.getenv('CLIENT_GOOGLE_SECRET'),
         },
         'SCOPE': [
             'profile',
