@@ -16,8 +16,26 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+from .views import RegisterAPIView, LoginAPIView, GoogleLogin
 
 urlpatterns = [
+    
+    # ADMIN SITE
     path('admin/', admin.site.urls),
-    path('accounts/', include('allauth.urls')),
+    
+    # TOKEN JWT CLAIM
+    path('api/token', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
+    
+    # ACCOUNTS SSO MANAGEMENT
+    path('auth/signup', RegisterAPIView.as_view(), name='register'),
+    path('auth/login', LoginAPIView.as_view(), name='login'),
+    path('auth/google/login', GoogleLogin.as_view(), name='google_login'),
+    
+    # # AUTH SSO
+    # path('accounts/', include('allauth.urls')),
 ]

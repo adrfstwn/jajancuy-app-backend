@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-cf#4y9$(g1b6ce$se5%q8)&9va@h7b(^kwkwb8b0+)5stgu5ha'
+SECRET_KEY = os.getenv('SECRET_APP')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -43,7 +43,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_extensions',
-    'accounts',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'django.contrib.sites',
+    'dj_rest_auth.registration',
+    'dj_rest_auth',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -69,6 +73,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 LOGIN_REDIRECT_URL = '/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 SOCIALACCOUNT_QUERY_EMAIL = True
 ACCOUNT_LOGOUT_ON_GET= True
@@ -87,7 +92,8 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
         'AUTH_PARAMS': {
             'access_type': 'online',
-        }
+        },
+        'OAUTH_PKCE_ENABLED': True,
     }
 }
 
