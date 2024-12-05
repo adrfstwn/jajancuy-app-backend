@@ -20,7 +20,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from .views import RegisterAPIView, LoginAPIView, GoogleLogin
+from accounts_managements.views import Register, Login, GoogleLogin, ResetPassword, ForgotPassword
 
 urlpatterns = [
     
@@ -28,13 +28,17 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
     # TOKEN JWT CLAIM
-    path('api/token', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token', TokenObtainPairView.as_view(), name='token_obtain'),
     path('api/token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
     
     # ACCOUNTS SSO MANAGEMENT
-    path('auth/signup', RegisterAPIView.as_view(), name='register'),
-    path('auth/login', LoginAPIView.as_view(), name='login'),
+    path('auth/signup', Register.as_view(), name='register'),
+    path('auth/login', Login.as_view(), name='login'),
     path('auth/google/login', GoogleLogin.as_view(), name='google_login'),
+    
+    path('forgot-password', ForgotPassword.as_view(), name='forgot_password'),
+    path('reset-password/<str:uidb64>/<str:token>', ResetPassword.as_view(), name='reset_passwrod'),
+    
     
     # # AUTH SSO
     # path('accounts/', include('allauth.urls')),
