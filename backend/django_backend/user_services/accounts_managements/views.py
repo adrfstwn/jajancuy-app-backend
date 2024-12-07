@@ -11,7 +11,17 @@ from django.contrib.auth.tokens import default_token_generator
 from rest_framework_simplejwt.tokens import RefreshToken
 from dj_rest_auth.registration.views import SocialLoginView
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from .models import Role, UserRole
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
+@receiver(post_save, sender=User)
+def assign_role_to_superuser(sender, instance, created, **kwargs):
+    if created and instance.is_superuser:
+        role_admin = Role.objects.get(name="Admin")
+        if not UserRole.objects.filter(user_id=instance.id, role=role_admin).exists():
+            UserRole.objects.create(user_id=instance.id, role=role_admin)
+            
 class Register(APIView):
     def post(self, request):
         data = request.data
@@ -32,8 +42,16 @@ class Register(APIView):
 
         username = email.split('@')[0]
         
-        user = User.objects.create_user(first_name=first_name, last_name=last_name, username=username, email=email, password=password)
-        user.save()
+        user = User.objects.create_user(
+            first_name=first_name, 
+            last_name=last_name, 
+            username=username, 
+            email=email, 
+            password=password
+        )
+       
+        role_user = Role.objects.get(name="User")
+        UserRole.objects.create(user_id=user.id, role=role_user)
 
         return Response({'message': 'User registered successfully'}, status=status.HTTP_201_CREATED)
 
@@ -62,6 +80,12 @@ class Login(APIView):
         refresh = RefreshToken.for_user(user)
 
         return Response({
+            'user_info': {
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+            },
             'access': str(refresh.access_token),
             'refresh': str(refresh),
         }, status=status.HTTP_200_OK)
@@ -75,6 +99,10 @@ class GoogleLogin(SocialLoginView):
         super().post(request, *args, **kwargs)
 
         user = self.user
+        
+        role_user = Role.objects.get(name="User")
+        if not UserRole.objects.filter(user_id=user.id, role=role_user).exists():
+            UserRole.objects.create(user_id=user.id, role=role_user)
         
         refresh = RefreshToken.for_user(user)
 
@@ -143,3 +171,6 @@ class ResetPassword(APIView):
         user.save()
 
         return Response({'message': 'Password reset successfully'}, status=status.HTTP_200_OK)
+    
+# class EditPassword(APIView):
+    
