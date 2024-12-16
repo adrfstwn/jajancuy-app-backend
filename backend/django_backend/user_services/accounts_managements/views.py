@@ -78,6 +78,12 @@ class Login(APIView):
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
         refresh = RefreshToken.for_user(user)
+        
+        user_roles = UserRole.objects.filter(user_id=user.id).select_related('role').first()
+        roles = user_roles.role.name
+        
+        # user_roles = UserRole.objects.filter(user_id=user.id).select_related('role')
+        # roles = [user_object.role.name for user_object in user_roles]
 
         return Response({
             'user_info': {
@@ -85,6 +91,7 @@ class Login(APIView):
                 'email': user.email,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
+                'roles': roles,
             },
             'access': str(refresh.access_token),
             'refresh': str(refresh),
@@ -106,12 +113,16 @@ class GoogleLogin(SocialLoginView):
         
         refresh = RefreshToken.for_user(user)
 
+        user_roles = UserRole.objects.filter(user_id=user.id).select_related('role').first()
+        roles = user_roles.role.name 
+        
         return Response({
              'user_info': {
                 'username': user.username,
                 'email': user.email,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
+                'roles': roles,
             },
             'access': str(refresh.access_token),
             'refresh': str(refresh),
