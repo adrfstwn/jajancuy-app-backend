@@ -1,15 +1,10 @@
-# Ignore virtual environment
 .venv/
-
-# Ignore Python bytecode files
 *.pyc
+*.env
+
 django_backend/user_services/accounts_managements/__pycache__/
 django_backend/user_services/accounts_managements/commands/__pycache__/
+django_backend/user_services/accounts_managements/migrations/__pycache__/
+django_backend/user_services/accounts_managements/migrations/*.py
+!django_backend/user_services/accounts_managements/migrations/.gitkeep
 django_backend/user_services/user_services/__pycache__/
-
-# Ignore Django migrations folder
-
-
-
-# Ignore .env files
-*.env
