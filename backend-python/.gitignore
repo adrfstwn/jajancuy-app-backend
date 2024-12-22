@@ -1,5 +1,5 @@
 # Ignore virtual environment
-venv-jajancuy/
+.venv/
 
 # Ignore Python bytecode files
 *.pyc
