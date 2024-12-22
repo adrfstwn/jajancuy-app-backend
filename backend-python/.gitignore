@@ -8,7 +8,7 @@ django_backend/user_services/accounts_managements/commands/__pycache__/
 django_backend/user_services/user_services/__pycache__/
 
 # Ignore Django migrations folder
-django_backend/user_services/accounts_managements/migrations/
+
 
 
 # Ignore .env files
