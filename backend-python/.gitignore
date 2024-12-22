@@ -1,6 +1,12 @@
-venv-jajancuy
-django_backend/user_services/accounts_managements/__pycache__/
-django_backend/user_services/accounts_managements/management/__pycache__/
-django_backend/user_services/accounts_managements/migrations/__pycache__/
-django_backend/user_services/user_services/__pycache__/
-django_backend/user_services/user_services/.env
+# Ignore virtual environment
+venv-jajancuy/
+
+# Ignore Python bytecode files
+*.pyc
+__pycache__/
+
+# Ignore Django migrations folder
+django_backend/user_services/accounts_managements/migrations/
+
+# Ignore .env files
+*.env
