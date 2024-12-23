@@ -1,7 +1,8 @@
 from django.test import TestCase
 from ..models import Role, UserRole
 from django.contrib.auth.models import User
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction, connection
+from django.core.exceptions import ValidationError
         
 class InputRoleModelTest(TestCase):
     
@@ -17,8 +18,9 @@ class InputRoleModelTest(TestCase):
         self.assertEqual(str(self.role), "Developer")
         
     def test_role_missing_fields(self):
-        with self.assertRaises(IntegrityError):
-            Role.objects.create()
+        role = Role(name=None)
+        with self.assertRaises(ValidationError):
+            role.full_clean()
         
     
 class InputUserRoleModelTest(TestCase):
@@ -92,8 +94,17 @@ class UniqueUserRoleModelTestCase(TestCase):
         with self.assertRaises(IntegrityError):
             UserRole.objects.create(user=self.user, role=self.role)
             
+
     def test_user_role_with_invalid_data(self):
-        with self.assertRaises(IntegrityError):
-            UserRole.objects.create(user_id=999, role=self.role)  # Non-existent user
-        with self.assertRaises(IntegrityError):
-            UserRole.objects.create(user=self.user, role_id=999)
+        with connection.cursor() as cursor:
+            cursor.execute("SET CONSTRAINTS ALL IMMEDIATE;")
+            
+        # Test for user_id that does not exist
+        with transaction.atomic():
+            with self.assertRaises(IntegrityError):
+                UserRole.objects.create(user_id=999, role=self.role)
+
+        # Test for role_id that does not exist
+        with transaction.atomic():
+            with self.assertRaises(IntegrityError):
+                UserRole.objects.create(user=self.user, role_id=999)

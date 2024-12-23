@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Role(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, blank=False, null=False)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -24,7 +24,7 @@ class UserRole(models.Model):
         ]
 
     def __str__(self):
-        return f"User Id: {self.user}, Role: {self.role.name}"
+        return f"User Id: {self.user_id}, Role: {self.role.name}"
 
     
 class InfoUser(models.Model):
