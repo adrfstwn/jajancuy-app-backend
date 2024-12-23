@@ -1,19 +1,20 @@
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from django.contrib.auth.models import User
 from rest_framework.exceptions import ValidationError
+from rest_framework_simplejwt.tokens import RefreshToken
+from dj_rest_auth.registration.views import SocialLoginView
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
-from rest_framework_simplejwt.tokens import RefreshToken
-from dj_rest_auth.registration.views import SocialLoginView
-from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from .models import Role, UserRole
+from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from .models import Role, UserRole
+from .serializers import LoginRequestSerializers, RegisterRequestSerializers, ResetPasswordRequestSerializer
 
 @receiver(post_save, sender=User)
 def assign_role_to_superuser(sender, instance, created, **kwargs):
@@ -24,78 +25,52 @@ def assign_role_to_superuser(sender, instance, created, **kwargs):
             
 class Register(APIView):
     def post(self, request):
-        data = request.data
-        first_name = data.get('first_name')
-        last_name = data.get('last_name')
-        email = data.get('email')
-        password = data.get('password')
-        confirmation_password = data.get('confirmation_password')
-
-        if not first_name or not last_name or not email or not password:
-            return Response({'error': 'All fields are required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if User.objects.filter(email=email).exists():
-            return Response({'error': 'Email already registered'}, status=status.HTTP_400_BAD_REQUEST)
+        serializerRegister = RegisterRequestSerializers(data = request.data)
+        if Register.is_valid():
+            data = serializerRegister.validated_data
+            usernameFromEmail = data['email'].split('@')[0]
+            user = User.objects.create_user(
+                first_name=data['first_name'], 
+                last_name=data['last_name'], 
+                username=usernameFromEmail, 
+                email=data['email'], 
+                password=data['password']
+            )
+            role_user = Role.objects.get(name="User")
+            UserRole.objects.create(user_id=user.id, role=role_user)
+            return Response({'message': 'User registered successfully'}, status=status.HTTP_201_CREATED)
         
-        if password != confirmation_password:
-            return Response({'error': 'Password doesn\'t match'}, status=status.HTTP_400_BAD_REQUEST)
-
-        username = email.split('@')[0]
-        
-        user = User.objects.create_user(
-            first_name=first_name, 
-            last_name=last_name, 
-            username=username, 
-            email=email, 
-            password=password
-        )
-       
-        role_user = Role.objects.get(name="User")
-        UserRole.objects.create(user_id=user.id, role=role_user)
-
-        return Response({'message': 'User registered successfully'}, status=status.HTTP_201_CREATED)
-
+        return Response(serializerRegister.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 class Login(APIView):
     def post(self, request):
-        data = request.data
-        username_or_email = data.get('username_or_email')
-        password = data.get('password')
-
-        if not username_or_email or not password:
-            return Response({'error': 'Username and password are required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if '@' in username_or_email:
-            # Jika mengandung '@', anggap itu email
-            user = User.objects.filter(email=username_or_email).first()
-        else:
-            # Jika tidak mengandung '@', anggap itu username
-            user = User.objects.filter(username=username_or_email).first()
+        serializerLogin = LoginRequestSerializers(data = request.data)
+        if serializerLogin.is_valid():
+            user = serializerLogin.validated_data['user']
             
-        if user is None:
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-
-        if not user.check_password(password):
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-
-        refresh = RefreshToken.for_user(user)
+            # Generate JWT Token
+            refresh = RefreshToken.for_user(user)
         
-        user_roles = UserRole.objects.filter(user_id=user.id).select_related('role').first()
-        roles = user_roles.role.name
-        
-        # user_roles = UserRole.objects.filter(user_id=user.id).select_related('role')
-        # roles = [user_object.role.name for user_object in user_roles]
+            # Search Query for Role User
+            user_roles = UserRole.objects.filter(user_id=user.id).select_related('role').first()
+            if user_roles:
+                roles = user_roles.role.name
+            else:
+                roles = "No role assigned"
 
-        return Response({
-            'user_info': {
-                'username': user.username,
-                'email': user.email,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'roles': roles,
-            },
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
-        }, status=status.HTTP_200_OK)
+            return Response({
+                'user_info': {
+                    'username': user.username,
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'roles': roles,
+                },
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+            }, status=status.HTTP_200_OK)
+            
+        return Response(serializerLogin.errors, status=status.HTTP_400_BAD_REQUEST)
    
 class GoogleLogin(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
@@ -183,5 +158,4 @@ class ResetPassword(APIView):
 
         return Response({'message': 'Password reset successfully'}, status=status.HTTP_200_OK)
     
-# class EditPassword(APIView):
     
