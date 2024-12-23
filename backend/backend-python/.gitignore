@@ -4,8 +4,9 @@
 
 django_backend/user_services/.pytest_cache/
 django_backend/user_services/accounts_managements/__pycache__/
-django_backend/user_services/accounts_managements/commands/__pycache__/
+django_backend/user_services/accounts_managements/management/commands/__pycache__/
 django_backend/user_services/accounts_managements/migrations/__pycache__/
 django_backend/user_services/accounts_managements/migrations/*.py
 !django_backend/user_services/accounts_managements/migrations/.gitkeep
+django_backend/user_services/accounts_managements/test/__pycache__/
 django_backend/user_services/user_services/__pycache__/

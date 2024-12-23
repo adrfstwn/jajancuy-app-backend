@@ -6,10 +6,10 @@ class RegisterRequestSerializers(serializers.Serializer):
     last_name = serializers.CharField(required=True)
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, required=True)
-    confirmation_password = serializers.CharField(write_only=True, required=True)
+    password_confirmation = serializers.CharField(write_only=True, required=True)
     
     def validate(self, data):
-        if data['password'] != data['confirmation_password']:
+        if data['password'] != data['password_confirmation']:
             raise serializers.ValidationError("Passwords do not match.")
         if User.objects.filter(email=data['email']).exists():
             raise serializers.ValidationError("Email already registered.")
@@ -34,5 +34,19 @@ class LoginRequestSerializers(serializers.Serializer):
         data['user'] =  user
         return data
     
-class ResetPasswordRequestSerializer(serializers.Serializer):
+class ForgotPasswordRequestSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
+    
+    def validate_email(self, email):
+        if not User.objects.filter(email=email).exists():
+            raise serializers.ValidationError("User with this email doesn't exist!")
+        return email
+
+class ResetPasswordRequestSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True, required=True)
+    password_confirmation = serializers.CharField(write_only=True, required=True)
+    
+    def validate(self, data):
+        if data['password'] != data['password_confirmation']:
+            raise serializers.ValidationError("Password do not match!")
+        return data

@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from accounts_managements.models import Role
+from ...models import Role
 
 class Command(BaseCommand):
     help = "Seed initial roles into the database"

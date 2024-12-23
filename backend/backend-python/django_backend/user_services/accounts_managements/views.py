@@ -11,138 +11,142 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.models import User
+from datetime import timedelta
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import Role, UserRole
-from .serializers import LoginRequestSerializers, RegisterRequestSerializers, ResetPasswordRequestSerializer
-
+from .serializers import (LoginRequestSerializers, RegisterRequestSerializers, 
+                          ForgotPasswordRequestSerializer, ResetPasswordRequestSerializer)
+        
 @receiver(post_save, sender=User)
 def assign_role_to_superuser(sender, instance, created, **kwargs):
     if created and instance.is_superuser:
         role_admin = Role.objects.get(name="Admin")
-        if not UserRole.objects.filter(user_id=instance.id, role=role_admin).exists():
-            UserRole.objects.create(user_id=instance.id, role=role_admin)
+        if not UserRole.objects.filter(user=instance, role=role_admin).exists():
+            UserRole.objects.create(user=instance, role=role_admin)
+            
+def assign_default_role(user):
+    role, _ = Role.objects.get_or_create(name="User")
+    UserRole.objects.get_or_create(user=user, role=role)
+    
+def generate_jwt_tokens(user):
+    refresh = RefreshToken.for_user(user)
+    return {
+        'TokenAccess': str(refresh.access_token),
+        'TokenRefresh': str(refresh),
+    }
+
+def send_reset_email(user, email):
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+    reset_link = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}/"
+    send_mail(
+        subject='Password Reset Request',
+        message=f"Click the link below to reset your password:\n{reset_link}",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[email],
+    )
             
 class Register(APIView):
     def post(self, request):
-        serializerRegister = RegisterRequestSerializers(data = request.data)
-        if Register.is_valid():
-            data = serializerRegister.validated_data
-            usernameFromEmail = data['email'].split('@')[0]
-            user = User.objects.create_user(
-                first_name=data['first_name'], 
-                last_name=data['last_name'], 
-                username=usernameFromEmail, 
-                email=data['email'], 
-                password=data['password']
-            )
-            role_user = Role.objects.get(name="User")
-            UserRole.objects.create(user_id=user.id, role=role_user)
-            return Response({'message': 'User registered successfully'}, status=status.HTTP_201_CREATED)
+        serializerRegister = RegisterRequestSerializers(data=request.data)
         
-        return Response(serializerRegister.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializerRegister.is_valid(raise_exception=True)
+        
+        data = serializerRegister.validated_data
+        
+        # create username from email
+        usernameFromEmail = data['email'].split('@')[0]
+        
+        # create to db
+        user = User.objects.create_user(
+            first_name=data['first_name'], 
+            last_name=data['last_name'], 
+            username=usernameFromEmail, 
+            email=data['email'], 
+            password=data['password']
+        )
+        assign_default_role(user)
+        
+        return Response({'message': 'User registered successfully'}, status=status.HTTP_201_CREATED)
     
 class Login(APIView):
     def post(self, request):
-        serializerLogin = LoginRequestSerializers(data = request.data)
-        if serializerLogin.is_valid():
-            user = serializerLogin.validated_data['user']
+        serializerLogin = LoginRequestSerializers(data=request.data)
+        serializerLogin.is_valid(raise_exception=True)
+        
+        user = serializerLogin.validated_data['user']
+        
+        roles = user.userrole_set.first().role.name if user.userrole_set.exists() else "No role assigned"
             
-            # Generate JWT Token
-            refresh = RefreshToken.for_user(user)
-        
-            # Search Query for Role User
-            user_roles = UserRole.objects.filter(user_id=user.id).select_related('role').first()
-            if user_roles:
-                roles = user_roles.role.name
-            else:
-                roles = "No role assigned"
+        # Generate JWT Token
+        tokens = generate_jwt_tokens(user)
 
-            return Response({
-                'user_info': {
-                    'username': user.username,
-                    'email': user.email,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
-                    'roles': roles,
-                },
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
-            }, status=status.HTTP_200_OK)
-            
-        return Response(serializerLogin.errors, status=status.HTTP_400_BAD_REQUEST)
-   
-class GoogleLogin(SocialLoginView):
-    adapter_class = GoogleOAuth2Adapter
-
-    def post(self, request, *args, **kwargs):
-        
-        # Panggil login Google bawaan
-        super().post(request, *args, **kwargs)
-
-        user = self.user
-        
-        role_user = Role.objects.get(name="User")
-        if not UserRole.objects.filter(user_id=user.id, role=role_user).exists():
-            UserRole.objects.create(user_id=user.id, role=role_user)
-        
-        refresh = RefreshToken.for_user(user)
-
-        user_roles = UserRole.objects.filter(user_id=user.id).select_related('role').first()
-        roles = user_roles.role.name 
-        
         return Response({
-             'user_info': {
+            'message': 'User loged in successfully',
+            'user_info': {
                 'username': user.username,
                 'email': user.email,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
                 'roles': roles,
             },
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
+            **tokens,
+        }, status=status.HTTP_200_OK)
+   
+class GoogleLogin(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+
+    def post(self, request, *args, **kwargs):
+
+        # # Panggil login Google bawaan
+        super().post(request, *args, **kwargs)
+        user = self.user
+
+        time_difference = (user.last_login - user.date_joined)
+        
+        if time_difference < timedelta(seconds=5):
+            response_message = "User registered successfully"
+        else:
+            response_message = "User logged in successfully"
+        
+        # Ensure the user has a role (Assign default role if not assigned)
+        if not UserRole.objects.filter(user=user).exists():
+            assign_default_role(user)
+            
+        tokens = generate_jwt_tokens(user)
+        roles = user.userrole_set.first().role.name if user.userrole_set.exists() else "No role assigned"
+        
+        return Response({
+            'message': response_message,
+            'user_info': {
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'roles': roles,
+            },
+            **tokens,
         }, status=status.HTTP_200_OK)
         
 class ForgotPassword(APIView):
     def post(self, request):
-        email = request.data.get('email')
-
-        if not email:
-            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        user = User.objects.filter(email=email).first()
-
-        if not user:
-            return Response({'error': 'User with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
-
-        # Generate password reset token
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        token = default_token_generator.make_token(user)
-
-        # Construct password reset link
-        reset_link = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}/"
-
-        # Send email
-        send_mail(
-            subject='Password Reset Request',
-            message=f"Click the link below to reset your password:\n{reset_link}",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email],
-        )
-
+        forgotPasswordSerializer = ForgotPasswordRequestSerializer(data=request.data)
+        
+        forgotPasswordSerializer.is_valid(raise_exception=True)
+        
+        email = forgotPasswordSerializer.validated_data['email']
+        user = self.user
+        send_reset_email(user, email)
+        
         return Response({'message': 'Password reset email sent'}, status=status.HTTP_200_OK)
     
 class ResetPassword(APIView):
     def post(self, request, uidb64, token):
-        password = request.data.get('password')
-        confirmation_password = request.data.get('confirmation_password')
-
-        if not password or not confirmation_password:
-            return Response({'error': 'Password and confirmation password are required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if password != confirmation_password:
-            return Response({'error': 'Passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
-
+        resetPasswordSerializer = ResetPasswordRequestSerializer(data=request.data)
+        
+        resetPasswordSerializer.is_valid(raise_exception=True)
+        password = resetPasswordSerializer.validated_data['password']
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(pk=uid)
@@ -155,7 +159,6 @@ class ResetPassword(APIView):
         # Update user password
         user.set_password(password)
         user.save()
-
         return Response({'message': 'Password reset successfully'}, status=status.HTTP_200_OK)
     
     
