@@ -2,6 +2,7 @@
 *.pyc
 *.env
 
+django_backend/user_services/.pytest_cache/
 django_backend/user_services/accounts_managements/__pycache__/
 django_backend/user_services/accounts_managements/commands/__pycache__/
 django_backend/user_services/accounts_managements/migrations/__pycache__/
