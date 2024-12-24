@@ -30,9 +30,10 @@ SECRET_KEY = os.getenv('SECRET_APP')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['https://sso.jajancuy.aderifkysetiawan.site','https://jajancuy.aderifkysetiawan.site','127.0.0.1']
-CORS_ALLOW_ALL_ORIGINS = True
+# ALLOWED_HOSTS = ['https://sso.jajancuy.aderifkysetiawan.site','https://jajancuy.aderifkysetiawan.site','127.0.0.1']
 # CORS_ALLOWED_ORIGINS = ['https://jajancuy.aderifkysetiawan.site', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
+CORS_ALLOW_ALL_ORIGINS = True
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
