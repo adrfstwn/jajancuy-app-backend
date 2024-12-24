@@ -136,7 +136,9 @@ class ForgotPassword(APIView):
         forgotPasswordSerializer.is_valid(raise_exception=True)
         
         email = forgotPasswordSerializer.validated_data['email']
-        user = self.user
+        
+        user = User.objects.filter(email=email).first()
+        
         send_reset_email(user, email)
         
         return Response({'message': 'Password reset email sent'}, status=status.HTTP_200_OK)
