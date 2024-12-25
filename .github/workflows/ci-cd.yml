@@ -1,4 +1,4 @@
-name: JAJANCUY API CI CD
+name: CI/CD Connect to VPS
 
 on:
   pull_request:
@@ -15,9 +15,6 @@ jobs:
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
-
-    - name: Setup Docker Build
-      uses: docker/setup-buildx-action@v2
 
     - name: Setup Environment Variables
       working-directory: backend/backend-python/django_backend/user_services
@@ -39,16 +36,6 @@ jobs:
         echo "EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}" >> .env
         echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
 
-    - name: Build Docker Image
-      working-directory: backend/backend-python/django_backend/user_services
-      run: |
-        docker buildx build -t jajancuy-api-sso:latest .
-
-    - name: Run Docker Container (Optional for testing)
-      run: |
-        docker run -d -p 5000:5000 jajancuy-api-sso:latest
-        curl http://0.0.0.0:5000  # Untuk memastikan aplikasi berjalan
-
     - name: Deploy to VPS using SSH
       env:
         PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -64,7 +51,18 @@ jobs:
 
         # SSH into VPS and deploy
         ssh $VPS_USER@$VPS_HOST << 'EOF'
-          cd /path/to/your/project/directory
-          docker-compose down  # Stop any running containers
-          docker-compose up --build -d  # Rebuild and start the container
+          # Navigate to project directory
+          cd /var/www/aderifkysetiawan.site/jajancuy-app-backend
+
+          # Stop any running containers (if applicable)
+          docker-compose down
+
+          # Pull the latest changes from Git
+          git pull origin main
+
+          # Build and start the Docker container on the VPS
+          docker-compose up --build -d
+
+          # Ensure the application is running (optional)
+          curl http://0.0.0.0:5000
         EOF
