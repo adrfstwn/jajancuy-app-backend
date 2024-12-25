@@ -18,7 +18,7 @@ COPY . .
 
 # Run
 RUN python manage.py makemigrations
-RUN python manage.py makemigrations acounts_managements
+RUN python manage.py makemigrations accounts_managements
 RUN python manage.py migrate
 RUN python manage.py collectstatic --noinput
 
