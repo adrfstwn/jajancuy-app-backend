@@ -19,7 +19,7 @@ jobs:
     - name: Build Docker Image
       working-directory: backend/backend-python/django_backend/user_services
       run: |
-        docker build -t jajancuy-api-sso:latest .
+        docker buildx build -t jajancuy-api-sso:latest .
 
     - name: Run Docker Container (Optional for testing)
       run: |
