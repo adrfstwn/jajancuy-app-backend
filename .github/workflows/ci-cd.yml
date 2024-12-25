@@ -1,54 +1,67 @@
 name: JAJANCUY API CI CD
 
 on:
-    push:
-      branches:
-        - main
+  pull_request:
+    branches:
+      - main
+
 jobs:
-    deploy:
-      runs-on: ubuntu-latest
-  
-      steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-  
-      - name: Setup Docker Build
-        uses: docker/setup-buildx-action@v2
-        
-      - name: Build Docker Image
-        working-directory: backend/backend-python/django_backend/user_services
-        run: |
-          docker build -t jajancuy-api-sso:latest
-  
-      - name: Run Docker Container (Optional for testing)
-        run: |
-          docker run -d -p 5000:5000 jajancuy-api-sso:latest
-          curl http://0.0.0.0:5000  # Untuk memastikan aplikasi berjalan
-  
-      - name: Setup Environment Variables
-        working-directory: backend/backend-python/django_backend/user_services
-        run: |
-          echo "SECRET_APP=${{ secrets.DJANGO_SECRET_APP }}" >> .env
-          echo "RUN_PORT=${{ secrets.DJANGO_RUN_PORT }}" >> .env
+  deploy:
+    runs-on: ubuntu-latest
 
-          echo "DB_NAME=${{ secrets.DB_NAME_SSO }}" >> .env
-          echo "DB_USER=${{ secrets.DB_USER_SSO }}" >> .env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD_SSO }}" >> .env
-          echo "DB_HOST=${{ secrets.DB_HOST_SSO }}" >> .env
-          echo "DB_PORT=${{ secrets.DB_PORT_SSO }}" >> .env
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
-          echo "CLIENT_GOOGLE_ID=${{ secrets.CLIENT_GOOGLE_ID }}" >> .env
-          echo "CLIENT_GOOGLE_SECRET=${{ secrets.CLIENT_GOOGLE_SECRET }}" >> .env
+    - name: Setup Docker Build
+      uses: docker/setup-buildx-action@v2
 
-          echo "DEFAULT_FROM_EMAIL=${{ secrets.DEFAULT_FROM_EMAIL }}" >> .env
-          echo "EMAIL_HOST=${{ secrets.EMAIL_HOST }}" >> .env
-          echo "EMAIL_PORT=${{ secrets.EMAIL_PORT }}" >> .env
-          echo "EMAIL_USE_TLS=${{ secrets.EMAIL_USE_TLS }}" >> .env
-          echo "EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}" >> .env
-          echo "EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}" >> .env
+    - name: Build Docker Image
+      working-directory: backend/backend-python/django_backend/user_services
+      run: |
+        docker build -t jajancuy-api-sso:latest .
 
-          echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
-  
-      - name: Deploy
-        run: |
-            echo "Deploying to server..."
+    - name: Run Docker Container (Optional for testing)
+      run: |
+        docker run -d -p 5000:5000 jajancuy-api-sso:latest
+        curl http://0.0.0.0:5000  # Untuk memastikan aplikasi berjalan
+
+    - name: Setup Environment Variables
+      working-directory: backend/backend-python/django_backend/user_services
+      run: |
+        echo "SECRET_APP=${{ secrets.DJANGO_SECRET_APP }}" >> .env
+        echo "RUN_PORT=${{ secrets.DJANGO_RUN_PORT }}" >> .env
+        echo "DB_NAME=${{ secrets.DB_NAME_SSO }}" >> .env
+        echo "DB_USER=${{ secrets.DB_USER_SSO }}" >> .env
+        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD_SSO }}" >> .env
+        echo "DB_HOST=${{ secrets.DB_HOST_SSO }}" >> .env
+        echo "DB_PORT=${{ secrets.DB_PORT_SSO }}" >> .env
+        echo "CLIENT_GOOGLE_ID=${{ secrets.CLIENT_GOOGLE_ID }}" >> .env
+        echo "CLIENT_GOOGLE_SECRET=${{ secrets.CLIENT_GOOGLE_SECRET }}" >> .env
+        echo "DEFAULT_FROM_EMAIL=${{ secrets.DEFAULT_FROM_EMAIL }}" >> .env
+        echo "EMAIL_HOST=${{ secrets.EMAIL_HOST }}" >> .env
+        echo "EMAIL_PORT=${{ secrets.EMAIL_PORT }}" >> .env
+        echo "EMAIL_USE_TLS=${{ secrets.EMAIL_USE_TLS }}" >> .env
+        echo "EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}" >> .env
+        echo "EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}" >> .env
+        echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
+
+    - name: Deploy to VPS using SSH
+      env:
+        PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        VPS_USER: ${{ secrets.VPS_USER }}
+        VPS_HOST: ${{ secrets.VPS_HOST }}
+      run: |
+        mkdir -p ~/.ssh
+        echo "$PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+
+        # Add VPS host to known hosts to prevent SSH warning
+        ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
+
+        # SSH into VPS and deploy
+        ssh $VPS_USER@$VPS_HOST << 'EOF'
+          cd /path/to/your/project/directory
+          docker-compose down  # Stop any running containers
+          docker-compose up --build -d  # Rebuild and start the container
+        EOF
