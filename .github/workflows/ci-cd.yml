@@ -52,6 +52,8 @@ jobs:
         working-directory: backend/backend-python/django_backend/user_services
         run: |
           source .venv/bin/activate
+          python manage.py makemigrations
+          python manage.py makemigrations accounts_managements
           python manage.py migrate
   
       - name: Collect Static Files
