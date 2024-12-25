@@ -8,7 +8,7 @@ WORKDIR /jajancuy/django-sso
 COPY requirements.txt .
 
 # Install library postgresql
-RUN apt-get update && apt-get install -y libpq-dev
+RUN apt-get update && apt-get install -y gcc libpq-dev
 
 # Install Dependencies
 RUN pip install --no-cache-dir -r requirements.txt
