@@ -19,16 +19,6 @@ jobs:
     - name: Setup Docker Build
       uses: docker/setup-buildx-action@v2
 
-    - name: Build Docker Image
-      working-directory: backend/backend-python/django_backend/user_services
-      run: |
-        docker buildx build -t jajancuy-api-sso:latest .
-
-    - name: Run Docker Container (Optional for testing)
-      run: |
-        docker run -d -p 5000:5000 jajancuy-api-sso:latest
-        curl http://0.0.0.0:5000  # Untuk memastikan aplikasi berjalan
-
     - name: Setup Environment Variables
       working-directory: backend/backend-python/django_backend/user_services
       run: |
@@ -48,6 +38,16 @@ jobs:
         echo "EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}" >> .env
         echo "EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}" >> .env
         echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
+
+    - name: Build Docker Image
+      working-directory: backend/backend-python/django_backend/user_services
+      run: |
+        docker buildx build -t jajancuy-api-sso:latest .
+
+    - name: Run Docker Container (Optional for testing)
+      run: |
+        docker run -d -p 5000:5000 jajancuy-api-sso:latest
+        curl http://0.0.0.0:5000  # Untuk memastikan aplikasi berjalan
 
     - name: Deploy to VPS using SSH
       env:
