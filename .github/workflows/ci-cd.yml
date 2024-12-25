@@ -1,93 +1,64 @@
 name: JAJANCUY API CI CD
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-
+    push:
+      branches:
+        - main
 jobs:
-  python-backend:
-    runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:13
-        env:
-          POSTGRES_USER: ${{ secrets.DB_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          POSTGRES_DB: ${{ secrets.DB_NAME }}
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-      - name: Checkout repository
+    deploy:
+      runs-on: ubuntu-latest
+  
+      steps:
+      - name: Checkout Code
         uses: actions/checkout@v3
-
-      - name: Set up Python
+  
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12'
-
-      - name: Install dependencies
+          python-version: '3.10'
+  
+      - name: Install Dependencies
         working-directory: backend/backend-python/django_backend/user_services
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install -r ../../../requirements.txt
-
-      - name: Run migrations
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install -r ../../requirements.txt
+  
+      - name: Setup Environment Variables
         working-directory: backend/backend-python/django_backend/user_services
-        env:
-          DATABASE_URL: postgres://postgres:${{ secrets.DB_PASSWORD }}@localhost:5432/${{ secrets.DB_NAME }}
         run: |
-          source venv/bin/activate
+          echo "SECRET_APP=${{ secrets.DJANGO_SECRET_APP }}" >> .env
+          echo "RUN_PORT=${{ secrets.DJANGO_RUN_PORT }}" >> .env
+
+          echo "DB_NAME=${{ secrets.DB_NAME_SSO }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER_SSO }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD_SSO }}" >> .env
+          echo "DB_HOST=${{ secrets.DB_HOST_SSO }}" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT_SSO }}" >> .env
+
+          echo "CLIENT_GOOGLE_ID=${{ secrets.CLIENT_GOOGLE_ID }}" >> .env
+          echo "CLIENT_GOOGLE_SECRET=${{ secrets.CLIENT_GOOGLE_SECRET }}" >> .env
+
+          echo "DEFAULT_FROM_EMAIL=${{ secrets.DEFAULT_FROM_EMAIL }}" >> .env
+          echo "EMAIL_HOST=${{ secrets.EMAIL_HOST }}" >> .env
+          echo "EMAIL_PORT=${{ secrets.EMAIL_PORT }}" >> .env
+          echo "EMAIL_USE_TLS=${{ secrets.EMAIL_USE_TLS }}" >> .env
+          echo "EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}" >> .env
+          echo "EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}" >> .env
+
+          echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
+  
+      - name: Run Migrations
+        working-directory: backend/backend-python/django_backend/user_services
+        run: |
+          source .venv/bin/activate
           python manage.py migrate
-
-      - name: Run tests
+  
+      - name: Collect Static Files
         working-directory: backend/backend-python/django_backend/user_services
-        env:
-          DATABASE_URL: postgres://postgres:${{ secrets.DB_PASSWORD }}@localhost:5432/${{ secrets.DB_NAME }}
         run: |
-          source venv/bin/activate
-          pytest
-
-#   go-backend:
-#     runs-on: ubuntu-latest
-
-#     steps:
-#       - name: Checkout repository
-#         uses: actions/checkout@v3
-
-#       - name: Set up Go
-#         uses: actions/setup-go@v4
-#         with:
-#           go-version: '1.20'
-
-#       - name: Build Go Backend
-#         working-directory: backend/backend-go
-#         run: |
-#           go mod tidy
-#           go build -o main
-
-#       - name: Run tests
-#         working-directory: backend/backend-go
-#         run: |
-#           go test ./...
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: [python-backend]
-
-    steps:
-      - name: Deploy to Server
-        run: |
-          echo "Deploy script here, such as SSH to server or other steps."
+          source .venv/bin/activate
+          python manage.py collectstatic --noinput
+          - name: Deploy to Server
+          run: |
+            echo "Deploying to server..."
