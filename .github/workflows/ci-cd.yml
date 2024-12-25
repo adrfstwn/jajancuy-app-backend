@@ -17,7 +17,7 @@ jobs:
       uses: docker/setup-buildx-action@v2
 
     - name: Build Docker Image
-      working-directory: backend/backend-python/django_backend/user_services
+      working-directory: ../backend/backend-python/django_backend/user_services
       run: |
         docker build -t jajancuy-api-sso:latest .
 
@@ -27,7 +27,7 @@ jobs:
         curl http://0.0.0.0:5000  # Untuk memastikan aplikasi berjalan
 
     - name: Setup Environment Variables
-      working-directory: backend/backend-python/django_backend/user_services
+      working-directory: ../backend/backend-python/django_backend/user_services
       run: |
         echo "SECRET_APP=${{ secrets.DJANGO_SECRET_APP }}" >> .env
         echo "RUN_PORT=${{ secrets.DJANGO_RUN_PORT }}" >> .env
