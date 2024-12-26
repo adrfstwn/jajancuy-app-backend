@@ -20,4 +20,9 @@ services:
 
   wait-for-db:
     image: "appropriate/curl"
-    command: sh -c 'until curl -s 127.0.0.1:5432; do sleep 2; done;'
+    command: sh -c 'until curl -s host.docker.internal:5432; do sleep 2; done;'
+
+networks:
+  default:
+    external:
+      name: host
