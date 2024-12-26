@@ -9,7 +9,7 @@ services:
     build:
       context: ./backend-python/django_backend/user_services
       dockerfile: Dockerfile
-    container_name: jajancuy-sso
+    container_name: jajancuy-sso # 
     ports:
       - "5000:5000"  # Ekspos aplikasi pada port 5000
     volumes:
