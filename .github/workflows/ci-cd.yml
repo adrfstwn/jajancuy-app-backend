@@ -1,4 +1,4 @@
-name: CI/CD Connect to VPS
+name: Jajancuy API Backend CI/CD
 
 on:
   push:
@@ -58,10 +58,14 @@ jobs:
             echo "Building and starting Docker containers..."
             docker-compose up --build -d
 
-            # # Clean up old Docker images to save space
-            # echo "Cleaning up unused Docker images..."
-            # docker image prune -f
 
-            # Verify that the application is running
-            echo "Verifying deployment..."
-            curl --fail http://localhost:5000 || (echo "Application failed to start!" && exit 1)
+            # Remove unused Docker images
+            echo "Removing unused Docker images..."
+            docker image prune -f
+
+            # Verify if the deployment is successful by checking if the application responds on port 5000
+            echo "Verifying deployment by checking port 5000..."
+            curl --fail http://localhost:5000 || { echo "Deployment failed"; exit 1; }
+            
+            echo "Deployment successful!"
+
