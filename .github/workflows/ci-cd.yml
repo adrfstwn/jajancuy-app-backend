@@ -41,11 +41,14 @@ jobs:
             git config --global url."https://${{ secrets.PERSONAL_GITHUB_TOKEN }}:@github.com".insteadOf "https://github.com"
             
             # Navigate to the project directory
-            cd /var/www/jajancuy-app-backend/backend
+            cd /var/www/jajancuy-app-backend
 
             # Pull the latest changes from Git
             echo "Pulling latest changes from Git..."
             git pull origin main
+
+            # Navigate to the docker compose
+            cd /var/www/jajancuy-app-backend/backend
 
             # Stop any running containers (if applicable)
             echo "Stopping running containers..."

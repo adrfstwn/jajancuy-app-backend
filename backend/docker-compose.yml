@@ -9,7 +9,7 @@ services:
     ports:
       - "5000:5000"  # Ekspos aplikasi pada port 5000
     volumes:
-      - ./backend-python/django_backend/user_services:/jajancuy/django-sso  # Menggunakan path relatif untuk volume
+      - backend-python/django_backend/user_services:/jajancuy/django-sso  # Pastikan path relatif benar
     restart: always
     depends_on:
       - wait-for-db
