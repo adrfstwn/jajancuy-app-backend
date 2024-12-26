@@ -7,46 +7,58 @@ on:
 
 jobs:
   deploy:
+    name: Deploy project with Docker
+    permissions:
+      deployments: write
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          ref: main
+          token: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
 
-    - name: Deploy to VPS using SSH
-      env:
-        PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        VPS_USER: ${{ secrets.VPS_USER }}
-        VPS_HOST: ${{ secrets.VPS_HOST }}
-      run: |
-        # Setup SSH
-        mkdir -p ~/.ssh
-        echo "$PRIVATE_KEY" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
+      - name: Create GitHub deployment
+        uses: chrnorm/deployment-action@v2
+        id: deployment
+        with:
+          token: '${{ github.token }}'
+          environment: production
 
-        # SSH into VPS and execute commands
-        ssh $VPS_USER@$VPS_HOST << 'EOF'
-          # Navigate to project directory
-          cd /var/www/jajancuy-app-backend
+      - name: Set up SSH Key and Deploy my App on Server
+        uses: appleboy/ssh-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: 22
+          script: |
+            # Setup GitHub Token for authentication
+            git config --global url."https://${{ secrets.PERSONAL_GITHUB_TOKEN }}:@github.com".insteadOf "https://github.com"
+            
+            # Navigate to the project directory
+            cd /var/www/jajancuy-app-backend
 
-          # Stop any running containers (if applicable)
-          echo "Stopping running containers..."
-          docker-compose down || true
+            # Stop any running containers (if applicable)
+            echo "Stopping running containers..."
+            docker-compose down || true
 
-          # Pull the latest changes from Git
-          echo "Pulling latest changes from Git..."
-          git pull origin main
+            # Pull the latest changes from Git
+            echo "Pulling latest changes from Git..."
+            git pull origin main
 
-          # Build and start Docker containers
-          echo "Building and starting Docker containers..."
-          docker-compose up --build -d
+            # Build and start Docker containers
+            echo "Building and starting Docker containers..."
+            docker-compose up --build -d
 
-          # Clean up old Docker images
-          echo "Cleaning up unused Docker images..."
-          docker image prune -f
+            # Clean up old Docker images to save space
+            echo "Cleaning up unused Docker images..."
+            docker image prune -f
 
-          # Verify application is running (optional)
-          echo "Verifying deployment..."
-          curl --fail http://localhost:5000 || (echo "Application failed to start!" && exit 1)
-        EOF
+            # Verify that the application is running
+            echo "Verifying deployment..."
+            curl --fail http://localhost:5000 || (echo "Application failed to start!" && exit 1)
