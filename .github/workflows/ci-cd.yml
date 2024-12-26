@@ -43,15 +43,6 @@ jobs:
             # Navigate to the project directory
             cd /var/www/jajancuy-app-backend/backend
 
-            # Ensure the volume exists in the docker-compose file
-            echo "Checking Docker volumes declaration..."
-            if ! grep -q "backend-python/django_backend/user_services:/jajancuy/django-sso:rw" docker-compose.yml; then
-              echo "Volume declaration not found in docker-compose.yml. Adding it..."
-              echo "volumes:" >> docker-compose.yml
-              echo "  backend-python/django_backend/user_services:" >> docker-compose.yml
-              echo "    driver: local" >> docker-compose.yml
-            fi
-
             # Pull the latest changes from Git
             echo "Pulling latest changes from Git..."
             git pull origin main
