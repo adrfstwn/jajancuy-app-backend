@@ -58,9 +58,9 @@ jobs:
             echo "Building and starting Docker containers..."
             docker-compose up --build -d
 
-            # Clean up old Docker images to save space
-            echo "Cleaning up unused Docker images..."
-            docker image prune -f
+            # # Clean up old Docker images to save space
+            # echo "Cleaning up unused Docker images..."
+            # docker image prune -f
 
             # Verify that the application is running
             echo "Verifying deployment..."
