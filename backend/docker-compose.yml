@@ -14,13 +14,7 @@ services:
       - "5000:5000"  # Ekspos aplikasi pada port 5000
     volumes:
       - ./backend-python/django_backend/user_services:/jajancuy/django-sso  # Pastikan path relatif benar
-    restart: always
-    depends_on:
-      - wait-for-db
-
-  wait-for-db:
-    image: "appropriate/curl"
-    command: sh -c 'until curl -s host.docker.internal:5432; do sleep 2; done;'
+    restart: always\\
 
 networks:
   default:
