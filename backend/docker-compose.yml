@@ -9,7 +9,7 @@ services:
     ports:
       - "5000:5000"  # Ekspos aplikasi pada port 5000
     volumes:
-      - backend-python/django_backend/user_services:/jajancuy/django-sso
+      - backend-python/django_backend/user_services:/jajancuy/django-sso:rw  # Pastikan volume memiliki akses baca/tulis
     restart: always
     depends_on:
       - wait-for-db
@@ -17,3 +17,8 @@ services:
   wait-for-db:
     image: "appropriate/curl"
     command: sh -c 'until curl -s 127.0.0.1:5432; do sleep 2; done;'
+
+# Deklarasi volume untuk memastikan volume terdeteksi
+volumes:
+  backend-python/django_backend/user_services:
+    driver: local
