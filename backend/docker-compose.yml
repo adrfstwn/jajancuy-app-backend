@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  django-app:
+    build:
+      context: .
+      dockerfile: backend-python/django_backend/user_services/Dockerfile
+    container_name: jajancuy-sso
+    ports:
+      - "5000:5000"  # Ekspos aplikasi pada port 5000
+    volumes:
+      - backend-python/django_backend/user_services:/jajancuy/django-sso
+    restart: always
+    depends_on:
+      - wait-for-db
+
+  wait-for-db:
+    image: "appropriate/curl"
+    command: sh -c 'until curl -s 127.0.0.1:5432; do sleep 2; done;'

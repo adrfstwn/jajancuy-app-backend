@@ -1,9 +1,6 @@
 name: CI/CD Connect to VPS
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
     branches:
       - main
@@ -16,53 +13,40 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
-    - name: Setup Environment Variables
-      working-directory: backend/backend-python/django_backend/user_services
-      run: |
-        echo "SECRET_APP=${{ secrets.DJANGO_SECRET_APP }}" >> .env
-        echo "RUN_PORT=${{ secrets.DJANGO_RUN_PORT }}" >> .env
-        echo "DB_NAME=${{ secrets.DB_NAME_SSO }}" >> .env
-        echo "DB_USER=${{ secrets.DB_USER_SSO }}" >> .env
-        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD_SSO }}" >> .env
-        echo "DB_HOST=${{ secrets.DB_HOST_SSO }}" >> .env
-        echo "DB_PORT=${{ secrets.DB_PORT_SSO }}" >> .env
-        echo "CLIENT_GOOGLE_ID=${{ secrets.CLIENT_GOOGLE_ID }}" >> .env
-        echo "CLIENT_GOOGLE_SECRET=${{ secrets.CLIENT_GOOGLE_SECRET }}" >> .env
-        echo "DEFAULT_FROM_EMAIL=${{ secrets.DEFAULT_FROM_EMAIL }}" >> .env
-        echo "EMAIL_HOST=${{ secrets.EMAIL_HOST }}" >> .env
-        echo "EMAIL_PORT=${{ secrets.EMAIL_PORT }}" >> .env
-        echo "EMAIL_USE_TLS=${{ secrets.EMAIL_USE_TLS }}" >> .env
-        echo "EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}" >> .env
-        echo "EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}" >> .env
-        echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
-
     - name: Deploy to VPS using SSH
       env:
         PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         VPS_USER: ${{ secrets.VPS_USER }}
         VPS_HOST: ${{ secrets.VPS_HOST }}
       run: |
+        # Setup SSH
         mkdir -p ~/.ssh
         echo "$PRIVATE_KEY" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-
-        # Add VPS host to known hosts to prevent SSH warning
         ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
 
-        # SSH into VPS and deploy
+        # SSH into VPS and execute commands
         ssh $VPS_USER@$VPS_HOST << 'EOF'
           # Navigate to project directory
-          cd /var/www/aderifkysetiawan.site/jajancuy-app-backend
+          cd /var/www/jajancuy-app-backend
 
           # Stop any running containers (if applicable)
-          docker-compose down
+          echo "Stopping running containers..."
+          docker-compose down || true
 
           # Pull the latest changes from Git
+          echo "Pulling latest changes from Git..."
           git pull origin main
 
-          # Build and start the Docker container on the VPS
+          # Build and start Docker containers
+          echo "Building and starting Docker containers..."
           docker-compose up --build -d
 
-          # Ensure the application is running (optional)
-          curl http://0.0.0.0:5000
+          # Clean up old Docker images
+          echo "Cleaning up unused Docker images..."
+          docker image prune -f
+
+          # Verify application is running (optional)
+          echo "Verifying deployment..."
+          curl --fail http://localhost:5000 || (echo "Application failed to start!" && exit 1)
         EOF
