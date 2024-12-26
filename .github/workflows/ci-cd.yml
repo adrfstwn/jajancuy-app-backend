@@ -64,9 +64,7 @@ jobs:
             docker image prune -f
 
             # Verify if the deployment is successful by checking if the application responds on port 5000
-            echo "Verifying deployment by checking port 5000..."
-            curl --silent --fail http://localhost:5000 || { echo "Deployment successful (server is up)"; exit 0; }
+            echo "Checking if the server is running on port 5000..."
+            nc -zv localhost 5000 || { echo "Deployment failed (port 5000 not open)"; exit 1; }
 
-            echo "Deployment failed"
-            exit 1
-
+            echo "Deployment successful (server is up on port 5000)"
