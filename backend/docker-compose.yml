@@ -18,7 +18,3 @@ services:
     image: "appropriate/curl"
     command: sh -c 'until curl -s 127.0.0.1:5432; do sleep 2; done;'
 
-# Deklarasi volume untuk memastikan volume terdeteksi
-volumes:
-  backend-python/django_backend/user_services:
-    driver: local
