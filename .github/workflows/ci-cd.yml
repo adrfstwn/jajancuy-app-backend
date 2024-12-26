@@ -41,7 +41,7 @@ jobs:
             git config --global url."https://${{ secrets.PERSONAL_GITHUB_TOKEN }}:@github.com".insteadOf "https://github.com"
             
             # Navigate to the project directory
-            cd /var/www/jajancuy-app-backend
+            cd /var/www/jajancuy-app-backend/backend
 
             # Ensure the volume exists in the docker-compose file
             echo "Checking Docker volumes declaration..."
