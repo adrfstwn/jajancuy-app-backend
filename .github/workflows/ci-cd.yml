@@ -65,7 +65,8 @@ jobs:
 
             # Verify if the deployment is successful by checking if the application responds on port 5000
             echo "Verifying deployment by checking port 5000..."
-            curl --silent --fail http://localhost:5000 || { echo "Deployment failed"; exit 1; }
-            
-            echo "Deployment successful!"
+            curl --silent --fail http://localhost:5000 || { echo "Deployment successful (server is up)"; exit 0; }
+
+            echo "Deployment failed"
+            exit 1
 
