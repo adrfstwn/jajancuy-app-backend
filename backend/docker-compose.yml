@@ -3,13 +3,13 @@ version: "3.9"
 services:
   django-app:
     build:
-      context: .
-      dockerfile: backend-python/django_backend/user_services/Dockerfile
+      context: ./backend-python/django_backend/user_services
+      dockerfile: Dockerfile
     container_name: jajancuy-sso
     ports:
-      - "5000:5000"
+      - "5000:5000"  # Ekspos aplikasi pada port 5000
     volumes:
-      - user_services:/jajancuy/django-sso  # Use named volume
+      - ./backend-python/django_backend/user_services:/jajancuy/django-sso  # Pastikan path relatif benar
     restart: always
     depends_on:
       - wait-for-db
@@ -17,7 +17,3 @@ services:
   wait-for-db:
     image: "appropriate/curl"
     command: sh -c 'until curl -s 127.0.0.1:5432; do sleep 2; done;'
-
-volumes:
-  user_services:  # Define named volume here
-    driver: local
