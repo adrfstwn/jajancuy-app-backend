@@ -5,7 +5,7 @@ services:
     networks:
       - default
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "host.docker.internal:172.17.0.1"
     build:
       context: ./backend-python/django_backend/user_services
       dockerfile: Dockerfile
