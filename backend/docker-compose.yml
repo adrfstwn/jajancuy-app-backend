@@ -5,16 +5,21 @@ services:
     networks:
       - default
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "host.docker.internal:127.17.0.1"
     build:
       context: ./backend-python/django_backend/user_services
       dockerfile: Dockerfile
-    container_name: jajancuy-sso # 
-    ports:
-      - "5000:5000"  # Ekspos aplikasi pada port 5000
+    container_name: jajancuy-sso
     volumes:
-      - ./backend-python/django_backend/user_services:/jajancuy/django-sso  # Pastikan path relatif benar
-    restart: always\\
+      - ./backend-python/django_backend/user_services:/jajancuy/django-sso
+    restart: always
+    depends_on:
+      - wait-for-db
+    network_mode: host  # Menambahkan network_mode: host
+
+  wait-for-db:
+    image: "appropriate/curl"
+    command: sh -c 'until curl -s host.docker.internal:5432; do sleep 2; done;'
 
 networks:
   default:
