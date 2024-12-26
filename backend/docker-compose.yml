@@ -17,5 +17,6 @@ services:
   wait-for-db:
     image: "appropriate/curl"
     command: sh -c 'until curl -s 127.0.0.1:5432; do sleep 2; done;'
+
   volumes:
-    user_services:
+    user_services: #
