@@ -7,9 +7,9 @@ services:
       dockerfile: backend-python/django_backend/user_services/Dockerfile
     container_name: jajancuy-sso
     ports:
-      - "5000:5000"  # Ekspos aplikasi pada port 5000
+      - "5000:5000"
     volumes:
-      - user_services:/jajancuy/django-sso  # Path relatif dari folder docker-compose.yml
+      - user_services:/jajancuy/django-sso  # Use named volume
     restart: always
     depends_on:
       - wait-for-db
@@ -18,5 +18,6 @@ services:
     image: "appropriate/curl"
     command: sh -c 'until curl -s 127.0.0.1:5432; do sleep 2; done;'
 
-  volumes:
-    user_services: #
+volumes:
+  user_services:  # Define named volume here
+    driver: local
