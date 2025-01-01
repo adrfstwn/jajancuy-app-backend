@@ -11,7 +11,7 @@ COPY requirements.txt .
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install library postgresql
-RUN apt-get update && apt-get install -y gcc libpq-dev
+RUN apt-get update && apt-get install -y gcc libpq-dev apt-utils
 
 # Install Dependencies
 RUN pip install --no-cache-dir -r requirements.txt
