@@ -20,7 +20,8 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from accounts_managements.views import Register, Login, GoogleLogin, ResetPassword, ForgotPassword
+from accounts_managements.views import (Register, Login, GoogleLogin, ResetPassword, 
+                                        ForgotPassword, UserProfile, EditUserProfile)
 
 urlpatterns = [
     
@@ -35,9 +36,12 @@ urlpatterns = [
     path('auth/signup', Register.as_view(), name='register'),
     path('auth/login', Login.as_view(), name='login'),
     path('auth/google/login', GoogleLogin.as_view(), name='google_login'),
+    path('auth/user', UserProfile.as_view(), name='info_user'),
+    path('auth/user/edit', EditUserProfile.as_view(), name='edit_info_user'),
     
     path('forgot-password', ForgotPassword.as_view(), name='forgot_password'),
     path('reset-password/<str:uidb64>/<str:token>', ResetPassword.as_view(), name='reset_passwrod'),
+    
     
     
     # # AUTH SSO

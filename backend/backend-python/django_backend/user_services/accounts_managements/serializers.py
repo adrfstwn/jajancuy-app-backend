@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from .models import InfoUser
 
 class RegisterRequestSerializers(serializers.Serializer):
     first_name = serializers.CharField(required=True)
@@ -49,4 +50,22 @@ class ResetPasswordRequestSerializer(serializers.Serializer):
     def validate(self, data):
         if data['password'] != data['password_confirmation']:
             raise serializers.ValidationError("Password do not match!")
+        return data
+    
+class InfoUserSerializer(serializers.ModelSerializer):
+    # Anda bisa menambahkan validasi untuk beberapa field jika diperlukan
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
+    address = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    phone_number = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    date_of_birth = serializers.DateField(required=False, allow_null=True)
+    gender = serializers.ChoiceField(choices=[('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')], required=False, allow_null=True)
+    social_media_links = serializers.JSONField(required=False, allow_null=True)
+    status = serializers.ChoiceField(choices=[('Active', 'Active'), ('Inactive', 'Inactive')], required=False, default='Active')
+
+    class Meta:
+        model = InfoUser
+        fields = ['profile_picture', 'address', 'phone_number', 'date_of_birth', 'gender', 'social_media_links', 'status']
+        
+    def validate(self, data):
+        # Bisa ditambahkan validasi kustom jika diperlukan
         return data

@@ -3,6 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework import permissions
 from dj_rest_auth.registration.views import SocialLoginView
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from django.core.mail import send_mail
@@ -14,10 +16,11 @@ from django.contrib.auth.models import User
 from datetime import timedelta
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .models import Role, UserRole
+from .models import Role, UserRole, InfoUser
 from .serializers import (LoginRequestSerializers, RegisterRequestSerializers, 
-                          ForgotPasswordRequestSerializer, ResetPasswordRequestSerializer)
-        
+                          ForgotPasswordRequestSerializer, ResetPasswordRequestSerializer, 
+                          InfoUserSerializer)
+
 @receiver(post_save, sender=User)
 def assign_role_to_superuser(sender, instance, created, **kwargs):
     if created and instance.is_superuser:
@@ -162,5 +165,67 @@ class ResetPassword(APIView):
         user.set_password(password)
         user.save()
         return Response({'message': 'Password reset successfully'}, status=status.HTTP_200_OK)
+      
+class UserProfile(APIView):
+    # Autentikasi dan izin
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
     
+    def get(self, request):
+        # Ambil user yang terautentikasi
+        user = request.user
+
+        try:
+            # Ambil InfoUser terkait dengan user yang login
+            info_user = InfoUser.objects.get(user=user)
+            
+            # Jika ada InfoUser, return data profile
+            return Response({
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
+                'profile_picture': info_user.profile_picture.url if info_user.profile_picture else None,
+                'address': info_user.address,
+                'phone_number': info_user.phone_number,
+                'date_of_birth': info_user.date_of_birth,
+                'gender': info_user.gender,
+                'social_media_links': info_user.social_media_links,
+                'status': info_user.status
+            }, status=status.HTTP_200_OK)
+
+        except InfoUser.DoesNotExist:
+            # Jika InfoUser tidak ditemukan, kembalikan data kosong
+            return Response({
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
+                'profile_picture': None,
+                'address': None,
+                'phone_number': None,
+                'date_of_birth': None,
+                'gender': None,
+                'social_media_links': None,
+                'status': None
+            }, status=status.HTTP_200_OK)
+
+class EditUserProfile(APIView):
+    # Autentikasi dan izin
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
     
+    def put(self, request):
+        user = request.user
+        
+        # Cek apakah InfoUser sudah ada
+        info_user, created = InfoUser.objects.get_or_create(user=user)
+        
+        # Gunakan serializer untuk memvalidasi dan memperbarui data profil
+        serializer = InfoUserSerializer(info_user, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()  # Simpan perubahan ke database
+            return Response({'message': 'Profile updated successfully'}, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
