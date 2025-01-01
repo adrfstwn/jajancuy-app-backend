@@ -3,9 +3,9 @@
 *.env
 
 user_services/.pytest_cache/
-user_services/accounts_managements/__pycache__/
-user_services/accounts_managements/management/commands/__pycache__/
-user_services/accounts_managements/migrations/__pycache__/
-user_services/accounts_managements/migrations/*.py
-user_services/accounts_managements/test/__pycache__/
-user_services/user_services/__pycache__/
+accounts_managements/__pycache__/
+accounts_managements/management/commands/__pycache__/
+accounts_managements/migrations/__pycache__/
+accounts_managements/migrations/*.py
+accounts_managements/test/__pycache__/
+user_services/__pycache__/
