@@ -29,5 +29,8 @@ RUN python manage.py makemigrations && \
 # Expose the application port
 EXPOSE 5000
 
+# Menambahkan perintah collectstatic dalam Dockerfile
+RUN python manage.py collectstatic --noinput
+
 # Start Gunicorn
 CMD ["gunicorn", "user_services.wsgi", "--bind", "0.0.0.0:5000"]
