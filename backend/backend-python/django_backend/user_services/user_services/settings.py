@@ -35,6 +35,10 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 CORS_ALLOW_ALL_ORIGINS = True
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://auth.jajancuy.aderifkysetiawan.site',  # Tambahkan domain Anda
+    'http://auth.jajancuy.aderifkysetiawan.site',   # Jika menggunakan HTTP
+]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
