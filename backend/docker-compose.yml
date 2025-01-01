@@ -10,6 +10,7 @@ services:
     container_name: jajancuy-sso
     volumes:
       - ./backend-python/django_backend/user_services:/jajancuy/django-sso
+      - ./staticfiles:/jajancuy/django-sso/staticfiles
     ports:
       - "5000:5000"  # Memetakan port 5000 di host ke port 5000 di kontainer
     restart: always
