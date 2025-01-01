@@ -28,8 +28,17 @@ class UserRole(models.Model):
 
     
 class InfoUser(models.Model):
-    
+    user = models.OneToOneField(User, on_delete=models.CASCADE)  # Relasi one-to-one dengan user
+    profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    date_of_birth = models.DateField(blank=True, null=True)
+    gender = models.CharField(max_length=10, choices=[('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')], blank=True, null=True)
+    social_media_links = models.JSONField(blank=True, null=True)  # Untuk menyimpan link media sosial dalam format JSON
+    status = models.CharField(max_length=20, choices=[('Active', 'Active'), ('Inactive', 'Inactive')], default='Active')
+
     class Meta:
         db_table = 'info_user'
-        
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Info for {self.user.username}"
