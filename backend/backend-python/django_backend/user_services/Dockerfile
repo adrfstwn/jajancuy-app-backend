@@ -7,6 +7,9 @@ WORKDIR /jajancuy/django-sso
 # Copy requirements.txt
 COPY requirements.txt .
 
+# Set DEBIAN_FRONTEND to noninteractive to avoid terminal-based configuration prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Install library postgresql
 RUN apt-get update && apt-get install -y gcc libpq-dev
 
