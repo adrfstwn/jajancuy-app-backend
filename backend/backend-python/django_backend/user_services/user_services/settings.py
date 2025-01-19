@@ -24,14 +24,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# Set SECRET_KEY untuk Django (gunakan secret key di sini, pastikan menjaga kerahasiaannya)
 SECRET_KEY = os.getenv('SECRET_APP')
+SECRET_JWT_KEY = os.getenv('SECRET_JWT_KEY')
 
+# Simple JWT configuration for authentication
 SIMPLE_JWT = {
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': os.getenv('SECRET_JWT_KEY'),  # Gunakan secret key di sini
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    'ALGORITHM': 'HS256',  # Pastikan menggunakan algoritma HS256
+    'SIGNING_KEY': SECRET_JWT_KEY,  # Gunakan secret key yang benar
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # Masa berlaku access token
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),  # Masa berlaku refresh token
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
 }
 
 # SECURITY WARNING: don't run with debug turned on in production!

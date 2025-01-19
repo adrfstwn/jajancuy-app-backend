@@ -20,6 +20,12 @@ from .models import Role, UserRole, InfoUser
 from .serializers import (LoginRequestSerializers, RegisterRequestSerializers, 
                           ForgotPasswordRequestSerializer, ResetPasswordRequestSerializer, 
                           InfoUserSerializer)
+import base64
+import hmac
+import hashlib
+from rest_framework_simplejwt.settings import api_settings
+
+print("algoritm : ", api_settings.ALGORITHM)
 
 @receiver(post_save, sender=User)
 def assign_role_to_superuser(sender, instance, created, **kwargs):
@@ -84,6 +90,37 @@ class Login(APIView):
             
         # Generate JWT Token
         tokens = generate_jwt_tokens(user)
+        
+        # Ambil access token
+        access_token = tokens['TokenAccess']
+        
+        # Decode Access Token (JWT)
+        # Split token into header, payload, and signature
+        header_b64, payload_b64, signature_b64 = access_token.split('.')
+        
+        # Decode Base64
+        header_json = base64.urlsafe_b64decode(header_b64 + '==').decode('utf-8')
+        payload_json = base64.urlsafe_b64decode(payload_b64 + '==').decode('utf-8')
+        
+        # Print decoded header and payload
+        print(f"Decoded Header: {header_json}")
+        print(f"Decoded Payload: {payload_json}")
+        
+        # Decode Signature to check HMAC
+        signature = base64.urlsafe_b64decode(signature_b64 + '==')
+        
+        # Get the signing key from settings
+        signing_key = settings.SECRET_JWT_KEY
+        
+        # Compute HMAC from header + payload using signing key
+        hmac_calculated = hmac.new(
+            signing_key.encode('utf-8'),
+            msg=f"{header_b64}.{payload_b64}".encode('utf-8'),
+            digestmod=hashlib.sha256
+        ).digest()
+        
+        # Print HMAC signature
+        print(f"Calculated HMAC Signature: {base64.urlsafe_b64encode(hmac_calculated).decode('utf-8')}")
 
         return Response({
             'message': 'User loged in successfully',
@@ -95,6 +132,8 @@ class Login(APIView):
                 'roles': roles,
             },
             **tokens,
+            'SIGNING_KEY': signing_key,
+            'HMAC_Signature': base64.urlsafe_b64encode(hmac_calculated).decode('utf-8')
         }, status=status.HTTP_200_OK)
    
 class GoogleLogin(SocialLoginView):
