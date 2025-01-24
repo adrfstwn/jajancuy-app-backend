@@ -18,17 +18,21 @@ func InitSecretKey() []byte {
 	// Load .env
 	app.LoadEnv()
 
+	//log
+	log := logger.New()
+
 	// Ambil SECRET_JWT_KEY dari environment
 	secretKey := os.Getenv("SECRET_JWT_KEY")
-	// if secretKey == "" {
-	// 	log.Println("SECRET_JWT_KEY tidak ditemukan! Pastikan environment variable diatur dengan benar.")
-	// } else {
-	// 	log.Printf("SECRET_JWT_KEY ditemukan: %s\n", secretKey)
-	// }
+
+	if secretKey == "" {
+		log.Error("SECRET_JWT_KEY tidak ditemukan! Pastikan environment variable diatur dengan benar.")
+	} else {
+		// log.Info(fmt.Sprintf("SECRET_JWT_KEY ditemukan: %s", secretKey))
+	}
 	return []byte(secretKey)
 }
 
-// JwtMiddleware: Middleware untuk validasi JWT
+// Middleware untuk validasi JWT
 func JwtMiddleware() gin.HandlerFunc {
 
 	log := logger.New()

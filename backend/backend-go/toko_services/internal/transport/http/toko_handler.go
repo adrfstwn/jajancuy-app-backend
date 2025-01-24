@@ -23,7 +23,7 @@ func (h *TokoHandler) CreateToko(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	id, err := h.service.CreateToko(toko)
+	id, err := h.service.CreateToko(toko, c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

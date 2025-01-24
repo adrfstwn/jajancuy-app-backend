@@ -2,9 +2,10 @@ package domain
 
 type Toko struct {
 	ID          int
-	Name        string
-	Description string
 	OwnerID     int
+	Name        string
+	Address     string
+	Description string
 }
 
 // TokoService defines the interface for accessing Toko data
