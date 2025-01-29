@@ -1,21 +1,21 @@
 # .air.toml
 root = "."
-tmp_dir = "tmp"
+tmp_dir = "tmp" # Direktori sementara untuk file build
 
 [build]
-cmd = "go build -v -o tmp/main.exe cmd/main.go"
-include = ["*.go"]
-exclude = ["tmp/*"]
-delay = 1000
+cmd = "rm -f tmp/build-errors.log && go build -o tmp/main.exe cmd/main.go" # Hapus log build-error sebelum build
+include = ["**/*.go"] # Mengikuti semua file .go, termasuk dalam subdirektori
+exclude = ["tmp/**", "**/vendor/**"] # Jangan perhatikan perubahan di tmp/ dan vendor/
+delay = 1000 # Delay 1000ms setelah perubahan sebelum build
 
 [log]
-time = true
-level="debug"
-prefix = "[AIR]"
-color = "yellow"
-file="app.log"
+time = true # Aktifkan timestamp di log Air
+level = "debug" # Set level debug untuk log Air
+prefix = "[AIR]" # Prefix log Air
+color = "yellow" # Warna log di terminal
+file = "tmp/air.log" # Simpan log Air di tmp/air.log
 
 [watch]
-dir = "."
-include = ["*.go"]
-exclude = ["tmp/*"]
+dir = "." # Direktori utama untuk dipantau
+include = ["**/*.go"] # Hanya file .go yang dipantau
+exclude = ["tmp/**", "**/vendor/**", "**/*.swp"] # Abaikan tmp/, vendor/, dan file sementara seperti *.swp

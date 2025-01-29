@@ -25,7 +25,7 @@ func main() {
 		port = "8080" // Default to 8080 if not set
 	}
 
-	log.Info("Application Staring...")
+	log.Info("Application Starting...")
 
 	// Initialize Gin Router
 	r := gin.Default()

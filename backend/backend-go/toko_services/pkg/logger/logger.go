@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -29,9 +30,12 @@ func New() Logger {
 		os.Exit(1)
 	}
 
+	// Combine console and file output
+	multiWriter := io.MultiWriter(os.Stdout, file)
+
 	// Return a SimpleLogger with both console and file output
 	return &SimpleLogger{
-		logger: log.New(file, "", log.LstdFlags),
+		logger: log.New(multiWriter, "", log.LstdFlags),
 	}
 }
 

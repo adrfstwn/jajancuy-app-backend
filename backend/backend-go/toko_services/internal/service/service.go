@@ -3,9 +3,9 @@ package service
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"toko_services/internal/domain"
-	"toko_services/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -24,7 +24,7 @@ func NewTokoService(repo domain.TokoDomain) *TokoService {
 // CreateToko adds a new toko (store) to the database
 func (s *TokoService) CreateToko(toko domain.Toko, c *gin.Context) (int, error) {
 
-	log := logger.New()
+	log := log.New()
 
 	// Ambil klaim dari context
 	claims, exists := c.Get("claims")
